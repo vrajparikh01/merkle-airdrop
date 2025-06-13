@@ -6,9 +6,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MemeToken is ERC20, Ownable {
-    constructor(address initialOwner)
+    constructor()
         ERC20("MemeToken", "MMT")
-        Ownable(initialOwner)
+        Ownable(msg.sender)
     {}
 
     function mint(address to, uint256 amount) public onlyOwner {
