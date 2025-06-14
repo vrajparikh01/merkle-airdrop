@@ -18,7 +18,7 @@ contract MerkleAirdropTest is Test {
     bytes32[] proof = [proofOne, proofTwo];
 
     address user;
-    uint256 userPrivkey;
+    uint256 userPrivKey;
 
     function setup() public {
         memeToken = new MemeToken();
@@ -26,7 +26,12 @@ contract MerkleAirdropTest is Test {
 
         memeToken.mint(memeToken.owner(), amountToSend);
         memeToken.transfer(address(merkleAirdrop), amountToSend);
-        (user, userPrivkey) = makeAddrAndKey("user");
+        (user, userPrivKey) = makeAddrAndKey("user");
+    }
+
+    function signMessage(uint256 privKey, address account) public view returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 hashedMessage = merkleAirdrop.getMessageHash(account, amountToCollect);
+        (v, r, s) = vm.sign(privKey, hashedMessage);
     }
 
     function testUserCanClaim() public {
@@ -34,9 +39,11 @@ contract MerkleAirdropTest is Test {
 
         uint256 startingBalance = memeToken.balanceOf(user);
 
-        vm.prank(user);
+        vm.startPrank(user);
+        (uint8 v, bytes32 r, bytes32 s) = signMessage(userPrivKey, user);
+        vm.stopPrank();
 
-        merkleAirdrop.claim(user, amountToCollect, proof);
+        merkleAirdrop.claim(user, amountToCollect, proof, v, r, s);
         uint256 endingBalance = memeToken.balanceOf(user);
         console.log("Ending balance: %d", endingBalance);
         assertEq(endingBalance - startingBalance, amountToCollect);
